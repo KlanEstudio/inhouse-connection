@@ -295,69 +295,72 @@ class Caller
 
 $inh = new InHouse($id_dominio, $token, $formatofecha);
 
-$request = isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'';
-if($request == '') {
-	$uri = isset($_SERVER['REQUEST_URI'])?$_SERVER['REQUEST_URI']:'';
-	list($request) = explode('?', $uri);
-}
-$request = trim($request, '/');
-
-$request = str_replace('.php', '.html', $request);
-
-if($request == '') {
-	$request = 'index.html';
-}
-
-if(!file_exists($request)) {
-	header("HTTP/1.0 404 Not Found");
-	header('Status: 404 Not Found');
-	header('Content-type: text/html; charset=UTF-8');
-	echo 'Página no encontrada: '.$request;
-}
-else {
-	$contents = file_get_contents($request);
+if(!defined(LOAD_INHOUSE)) {
 	
-	try {
-		$renew_data = false;
-		$ext = pathinfo($request, PATHINFO_EXTENSION);
-		$get = http_build_query($_GET);
-		$cache = '__cache/'.str_replace('.'.$ext,'__'.$get.'__cache.'.$ext, $request);
-		if(file_exists($cache)) {
-			$changed = filemtime($cache);
-			if(time() - $changed > 60*$cache_min) {
+	$request = isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'';
+	if($request == '') {
+		$uri = isset($_SERVER['REQUEST_URI'])?$_SERVER['REQUEST_URI']:'';
+		list($request) = explode('?', $uri);
+	}
+	$request = trim($request, '/');
+	
+	$request = str_replace('.php', '.html', $request);
+	
+	if($request == '') {
+		$request = 'index.html';
+	}
+	
+	if(!file_exists($request)) {
+		header("HTTP/1.0 404 Not Found");
+		header('Status: 404 Not Found');
+		header('Content-type: text/html; charset=UTF-8');
+		echo 'Página no encontrada: '.$request;
+	}
+	else {
+		$contents = file_get_contents($request);
+		
+		try {
+			$renew_data = false;
+			$ext = pathinfo($request, PATHINFO_EXTENSION);
+			$get = http_build_query($_GET);
+			$cache = '__cache/'.str_replace('.'.$ext,'__'.$get.'__cache.'.$ext, $request);
+			if(file_exists($cache)) {
+				$changed = filemtime($cache);
+				if(time() - $changed > 60*$cache_min) {
+					$renew_data = true;
+				}
+			}
+			else {
 				$renew_data = true;
 			}
-		}
-		else {
-			$renew_data = true;
-		}
-		if($renew_data === false && $usecache === true) {
-			$contenido = file_get_contents($cache);
-		}
-		else {
-			$contenido = $inh->parse_html($contents);
-		} 
-		if(is_writable('.')) {
-			if(!file_exists('./__cache')) {
-				mkdir('__cache', 0755);
+			if($renew_data === false && $usecache === true) {
+				$contenido = file_get_contents($cache);
 			}
-			
-			if($renew_data == true) {
-				$dir = dirname($cache);
-				if(!file_exists($dir)) {
-					mkdir($dir, 0755, true);
+			else {
+				$contenido = $inh->parse_html($contents);
+			} 
+			if(is_writable('.')) {
+				if(!file_exists('./__cache')) {
+					mkdir('__cache', 0755);
 				}
-				file_put_contents($cache, $contenido);
+				
+				if($renew_data == true) {
+					$dir = dirname($cache);
+					if(!file_exists($dir)) {
+						mkdir($dir, 0755, true);
+					}
+					file_put_contents($cache, $contenido);
+				}
 			}
+			echo $contenido;
 		}
-		echo $contenido;
-	}
-	catch(Exception $e) {
-		if(file_exists($cache)) {
-			echo file_get_contents($cache);
-		}
-		else {
-			echo 'error de conexi&oacute;n con InHouse';
+		catch(Exception $e) {
+			if(file_exists($cache)) {
+				echo file_get_contents($cache);
+			}
+			else {
+				echo 'error de conexi&oacute;n con InHouse';
+			}
 		}
 	}
 }
