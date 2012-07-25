@@ -86,6 +86,7 @@ class InHouse {
 			case 'imagen':
 			case 'video':
 			case 'banner':
+			case 'audio':
 				$modulo = 'media';
 				break;
 		}
@@ -116,7 +117,7 @@ class InHouse {
 		elseif($campo == 'imagen') {
 			$field = 'ruta_media';
 		}
-		elseif($campo == 'video' || $campo == 'enlace' && $modulo == 'media') {
+		elseif($campo == 'video' || $campo == 'audio_mp3' || $campo == 'audio_ogg' || $campo == 'enlace' && $modulo == 'media') {
 			$field = 'media_media';
 		}
 		elseif($modulo == 'infogaleria') {
@@ -134,6 +135,14 @@ class InHouse {
 		
 		if($campo == 'fecha') {
 			$valor = $this->caller->formatFecha($valor);
+		}
+		
+		if($campo == 'audio_mp3') {
+			$valor = $this->media_url.str_replace('.ogg', '.mp3', $valor);
+		}
+		
+		if($campo == 'audio_ogg') {
+			$valor = $this->media_url.str_replace('.mp3', '.ogg', $valor);
 		}
 		
 		return $valor;
@@ -164,7 +173,7 @@ class InHouse {
 			}
 		}
 				
-		if($modulo == 'banners' || $modulo == 'banner' || $modulo == 'videos' || $modulo == 'imagenes') {
+		if($modulo == 'banners' || $modulo == 'banner' || $modulo == 'videos' || $modulo == 'imagenes' || $modulo == 'audios') {
 			$modulo = 'medias';
 		}
 		
