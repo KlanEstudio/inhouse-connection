@@ -301,7 +301,7 @@ class Caller
 
 $inh = new InHouse($id_dominio, $token, $formatofecha);
 
-if(!defined(LOAD_INHOUSE)) {
+if(!defined('LOAD_INHOUSE')) {
 	
 	$request = isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:'';
 	if($request == '') {
