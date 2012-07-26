@@ -17,6 +17,20 @@ $usecache = false;
 // Tiempo en minutos que permanece el cache
 $cache_min = 5;
 
+// Variable de configuracion de demo
+
+if(file_exists('conf.php')) {
+	include 'conf.php';
+}
+
+if(!defined('MEDIA_URL')) {
+	define('MEDIA_URL', 'http://media.admininhouse.com/');
+}
+
+if(!defined('API_URL')) {
+	define('API_URL', 'http://api.admininhouse.com/');
+}
+
 /***********************************************************************************************
  * Definición del funcionamiento
  ***********************************************************************************************/
@@ -29,7 +43,7 @@ class InHouse {
 	
 	protected $caller;
 	
-	protected $media_url = 'http://media.admininhouse.com/';
+	protected $media_url = MEDIA_URL;
 	
 	protected $valores = array();
 		
@@ -239,7 +253,7 @@ class Caller
 	
 	protected $formato_fecha;
 	
-	protected $api_url = 'http://api.admininhouse.com/';
+	protected $api_url = API_URL;
 	
 	public function __construct($id_dominio, $token, $formatofecha)
 	{
@@ -393,7 +407,7 @@ if(!defined('LOAD_INHOUSE')) {
 					include '404.html';
 				}
 				else {
-					echo 'Inhouse no encontro la información solicitada';
+					echo 'Inhouse no encontro la informaci&oacute;n solicitada';
 				}
 			}
 		}
