@@ -212,7 +212,7 @@ class InHouse {
 			}
 		}
 		
-		preg_match_all('/{(\w+)}/i', $original, $vars);
+		preg_match_all('/{(\w+(\|\w*)?)}/i', $original, $vars);
 		
 		if(!isset($this->valores[$modulo][$id]->tipo)) {
 			throw new InhouseContentException();
@@ -244,7 +244,7 @@ class InHouse {
 				catch(InhouseContentException $e) {
 					$data = 'ERROR';
 				}
-				$contenido = preg_replace( '/\{'.$var.'}/s', $data, $contenido);
+				$contenido = str_replace( '{'.$var.'}', $data, $contenido);
 			}
 			$coleccion .= $contenido;
 		}
