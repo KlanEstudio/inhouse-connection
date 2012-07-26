@@ -19,7 +19,11 @@ $cache_min = 5;
 
 /***********************************************************************************************
  * Definición del funcionamiento
- ***********************************************************************************************/ 
+ ***********************************************************************************************/
+
+class InhouseAuthException extends Exception {}
+
+class InhouseContentException extends Exception{}
 
 class InHouse {
 	
@@ -78,10 +82,6 @@ class InHouse {
 	}
 	
 	protected function getData($modulo, $campo, $id) {
-		if($this->connection === false) {
-			return 'forbidden';
-		}
-				
 		if($modulo == 'imagen' || $modulo == 'video' || $modulo == 'banner' || $modulo == 'audio' || $modulo == 'galeria_simple' || $modulo == 'imagen_simple' || $modulo == 'video_simple' || $modulo == 'audio_simple') {
 			$modulo = 'media';
 		}
@@ -91,14 +91,13 @@ class InHouse {
 			$id = isset($_GET[$id])?$_GET[$id]:NULL;
 		}
 		if(is_null($id)) {
-			return 'forbidden';
+			throw new InhouseContentException();
 		}
 		
 		if(!isset($this->valores[$modulo][$id])) {
 			$data = $this->caller->get_json($this->caller->construct_call($modulo, $id));
 			if($data->auth == false) {
-				$this->connection = false;
-				return '';
+				throw new InhouseAuthException();
 			}
 			$this->valores[$modulo][$id] = $data->$modulo;			
 		}
@@ -144,10 +143,6 @@ class InHouse {
 	}
 	
 	protected function processTemplate($original, $identificador) {
-		if($this->connection === false) {
-			return 'forbidden';
-		}
-		
 		list($modulo, $id) = explode('(', trim($identificador, ')'));
 		
 		$total = 0;
@@ -175,9 +170,11 @@ class InHouse {
 		if($modulo == 'galerias_simple' || $modulo == 'imagenes_simple' || $modulo == 'videos_simple' || $modulo == 'audios_simple') {
 			$modulo = 'galerias';
 			$temp_data = $this->caller->get_json($this->caller->construct_call($modulo, $id));
-			if($temp_data->auth == false || !isset($temp_data->galerias) || count($temp_data->galerias) == 0) {
-				$this->connection = false;
-				return '';
+			if($temp_data->auth == false) {
+				throw new InhouseAuthException();
+			}
+			if(!isset($temp_data->galerias) || count($temp_data->galerias) == 0) {
+				throw new InhouseContentException();
 			}
 			$id = $temp_data->galerias[0]->id_galeria;
 			$modulo = 'medias';
@@ -187,15 +184,14 @@ class InHouse {
 			$data = $this->caller->get_json($this->caller->construct_call($modulo, $id));
 			$this->valores[$modulo][$id] = $data;
 			if($data->auth == false) {
-				$this->connection = false;
-				return 'forbidden';
+				throw new InhouseAuthException();
 			}
 		}
 		
 		preg_match_all('/{(\w+)}/i', $original, $vars);
 		
 		if(!isset($this->valores[$modulo][$id]->tipo)) {
-			return '';
+			throw new InhouseContentException();
 		}
 		
 		$tipo = $this->valores[$modulo][$id]->tipo;
@@ -218,7 +214,13 @@ class InHouse {
 			$this->valores[$tipo][$elemento->$id] = $elemento;
 						
 			foreach($vars[1] as $var) {
-				$contenido = preg_replace( '/\{'.$var.'}/s', $this->getData($tipo, $var, $elemento->$id), $contenido);
+				try {
+					$data = $this->getData($tipo, $var, $elemento->$id);
+				}
+				catch(InhouseContentException $e) {
+					$data = 'ERROR';
+				}
+				$contenido = preg_replace( '/\{'.$var.'}/s', $data, $contenido);
 			}
 			$coleccion .= $contenido;
 		}
@@ -319,8 +321,13 @@ if(!defined('LOAD_INHOUSE')) {
 	if(!file_exists($request)) {
 		header("HTTP/1.0 404 Not Found");
 		header('Status: 404 Not Found');
-		header('Content-type: text/html; charset=UTF-8');
-		echo 'Página no encontrada: '.$request;
+		if(file_exists('404.html')) {
+			include '404.html';
+		}
+		else {
+			header('Content-type: text/html; charset=UTF-8');
+			echo 'Página no encontrada: '.$request;
+		}
 	}
 	else {
 		$contents = file_get_contents($request);
@@ -360,12 +367,34 @@ if(!defined('LOAD_INHOUSE')) {
 			}
 			echo $contenido;
 		}
-		catch(Exception $e) {
+		catch(InhouseAuthException $e) {
 			if(file_exists($cache)) {
 				echo file_get_contents($cache);
 			}
 			else {
-				echo 'error de conexi&oacute;n con InHouse';
+				header("HTTP/1.0 403 Forbidden");
+				header('Status: 403 Forbidden');
+				if(file_exists('403.html')) {
+					include '403.html';
+				}
+				else {
+					echo 'Error de autenticaci&oacute;n con Inhouse';
+				}
+			}
+		}
+		catch(InhouseContentException $e) {
+			if(file_exists($cache)) {
+				echo file_get_contents($cache);
+			}
+			else {
+				header("HTTP/1.0 404 Not Found");
+				header('Status: 404 Not Found');
+				if(file_exists('404.html')) {
+					include '404.html';
+				}
+				else {
+					echo 'Inhouse no encontro la información solicitada';
+				}
 			}
 		}
 	}
