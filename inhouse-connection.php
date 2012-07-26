@@ -78,7 +78,7 @@ class InHouse {
 			}
 		}
 		
-		preg_match_all('/{(\w+:\w+:\w+)}/i', $contents, $vars);
+		preg_match_all('/{(\w+:\w+(\|\w*)?:\w+)}/i', $contents, $vars);
 		
 		foreach($vars[1] as $var) {			
 			$info = explode(':', $var);
@@ -99,6 +99,9 @@ class InHouse {
 		if($modulo == 'imagen' || $modulo == 'video' || $modulo == 'banner' || $modulo == 'audio' || $modulo == 'galeria_simple' || $modulo == 'imagen_simple' || $modulo == 'video_simple' || $modulo == 'audio_simple') {
 			$modulo = 'media';
 		}
+		
+		$adv_campo = explode('|', $campo);
+		$campo = $adv_campo[0];
 		
 		$intid = (int) $id;
 		if($intid == 0) {
@@ -151,6 +154,13 @@ class InHouse {
 		
 		if($campo == 'audio_ogg') {
 			$valor = $this->media_url.str_replace('.mp3', '.ogg', $valor);
+		}
+		
+		if(isset($adv_campo[1])) {
+			$fn = $adv_campo[1];
+			if(function_exists($fn)) {
+				$valor = $fn($valor);
+			}
 		}
 		
 		return $valor;
