@@ -81,14 +81,9 @@ class InHouse {
 		if($this->connection === false) {
 			return 'forbidden';
 		}
-		
-		switch($modulo) {
-			case 'imagen':
-			case 'video':
-			case 'banner':
-			case 'audio':
-				$modulo = 'media';
-				break;
+				
+		if($modulo == 'imagen' || $modulo == 'video' || $modulo == 'banner' || $modulo == 'audio' || $modulo == 'galeria_simple' || $modulo == 'imagen_simple' || $modulo == 'video_simple' || $modulo == 'audio_simple') {
+			$modulo = 'media';
 		}
 		
 		$intid = (int) $id;
@@ -174,6 +169,17 @@ class InHouse {
 		}
 				
 		if($modulo == 'banners' || $modulo == 'banner' || $modulo == 'videos' || $modulo == 'imagenes' || $modulo == 'audios') {
+			$modulo = 'medias';
+		}
+		
+		if($modulo == 'galerias_simple' || $modulo == 'imagenes_simple' || $modulo == 'videos_simple' || $modulo == 'audios_simple') {
+			$modulo = 'galerias';
+			$temp_data = $this->caller->get_json($this->caller->construct_call($modulo, $id));
+			if($temp_data->auth == false || !isset($temp_data->galerias) || count($temp_data->galerias) == 0) {
+				$this->connection = false;
+				return '';
+			}
+			$id = $temp_data->galerias[0]->id_galeria;
 			$modulo = 'medias';
 		}
 		
