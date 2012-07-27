@@ -83,7 +83,10 @@ class InHouse {
 		foreach($vars[1] as $var) {			
 			$info = explode(':', $var);
 			
-			$contents = str_replace( '{'.$var.'}', $this->getData($info[0], $info[1], $info[2]), $contents);
+            try {
+    			$contents = str_replace( '{'.$var.'}', $this->getData($info[0], $info[1], $info[2]), $contents);
+            }
+            catch(InhouseContentException $e) {}
 		}
 		
 		preg_match_all('/<!--#\s?inh:(\w+\([\d+|\w+:\w+:\w+]+(,\d+)?\))\s?-->\n(<[^!]|[^<])*<!--#\s?close:inh\s?-->/i', $contents, $vars, PREG_SET_ORDER );
