@@ -35,6 +35,10 @@ if(!defined('API_URL')) {
  * Definición del funcionamiento
  ***********************************************************************************************/
 
+function url($string) {
+	return urlencode(strtolower(str_replace(array(' ', 'á', 'é', 'í', 'ó', 'ú', 'ñ'), array('-', 'a', 'e', 'i', 'o', 'u', 'n'), $string)));
+}
+
 class InhouseAuthException extends Exception {}
 
 class InhouseContentException extends Exception{}
