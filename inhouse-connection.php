@@ -31,12 +31,24 @@ if(!defined('API_URL')) {
 	define('API_URL', 'http://api.admininhouse.com/');
 }
 
+if(!defined('DATE_FORMAT')) {
+	define('DATE_FORMAT', $formatofecha);
+}
+
+if(!defined('DATE_URL')) {
+	define('DATE_URL', 'Y/m');
+}
+
 /***********************************************************************************************
  * Definición del funcionamiento
  ***********************************************************************************************/
 
 function url($string) {
 	return urlencode(strtolower(str_replace(array(' ', 'á', 'é', 'í', 'ó', 'ú', 'ñ'), array('-', 'a', 'e', 'i', 'o', 'u', 'n'), $string)));
+}
+
+function format_date($date, $format = DATE_FORMAT) {
+	return date($format, strtotime($date));
 }
 
 class InhouseAuthException extends Exception {}
@@ -53,9 +65,9 @@ class InHouse {
 		
 	protected $connection = true;
 	
-	public function __construct($id_dominio, $token, $formatofecha)
+	public function __construct($id_dominio, $token)
 	{
-		$this->caller = new Caller($id_dominio, $token, $formatofecha);
+		$this->caller = new Caller($id_dominio, $token);
 	}
 	
 	public function parse_html($contents) {
@@ -126,6 +138,17 @@ class InHouse {
 			$this->valores[$modulo][$id] = $data->$modulo;			
 		}
 		
+		$format_date = true;
+		$formatofecha = DATE_FORMAT;
+		if($campo == 'fecha_raw') {
+			$format_date = false;
+			$campo = 'fecha';
+		}
+		elseif($campo == 'fecha_url') {
+			$formatofecha = DATE_URL;
+			$campo = 'fecha';
+		}
+		
 		if($campo == 'id_galeria' || $campo == 'portada_thumb' || $campo == 'portada_imagen') {
 			$field = $campo;
 		}
@@ -151,8 +174,8 @@ class InHouse {
 			$valor = $this->media_url.$valor;
 		}
 		
-		if($campo == 'fecha') {
-			$valor = $this->caller->formatFecha($valor);
+		if($campo == 'fecha' && $format_date) {
+			$valor = format_date($valor, $formatofecha);
 		}
 		
 		if($campo == 'audio_mp3') {
@@ -267,17 +290,14 @@ class Caller
 	protected $token;
 	
 	protected $id_dominio;
-	
-	protected $formato_fecha;
-	
+		
 	protected $api_url = API_URL;
 	
-	public function __construct($id_dominio, $token, $formatofecha)
+	public function __construct($id_dominio, $token)
 	{
 		$this->dominio = $_SERVER['SERVER_NAME'];
 		$this->id_dominio = $id_dominio;
 		$this->token = $token;
-		$this->formatofecha = $formatofecha;
 	}
 	
 	protected function api_call($api_call)
@@ -324,15 +344,10 @@ class Caller
 		$call = $this->api_url.'?sec=api&response='.$modulo.'&token='.$this->token.'&id_dominio='.$this->id_dominio.'&dominio='.$this->dominio.'&id='.$id.'&view=json';
 		return $call;
 	}
-	
-	public function formatFecha($fecha)
-	{
-		return date($this->formatofecha, strtotime($fecha));
-	}
 }
 
 
-$inh = new InHouse($id_dominio, $token, $formatofecha);
+$inh = new InHouse($id_dominio, $token);
 
 if(!defined('LOAD_INHOUSE')) {
 	
