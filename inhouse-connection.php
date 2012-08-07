@@ -105,7 +105,7 @@ class InHouse {
             catch(InhouseContentException $e) {}
 		}
 		
-		preg_match_all('/<!--#\s?inh:(\w+\([\d+|\w+:\w+:\w+]+(,\d+)?\))\s?-->\n(<[^!]|[^<])*<!--#\s?close:inh\s?-->/i', $contents, $vars, PREG_SET_ORDER );
+		preg_match_all('/<!--#\s?inh:(\w+\([\d+|\w+:\w+:\w+]+(,\d+)?\))\s?-->(<[^!]|[^<])*<!--#\s?close:inh\s?-->/i', $contents, $vars, PREG_SET_ORDER );
 		
 		foreach($vars as $plantilla) {
 			$contents = str_replace($plantilla[0], $this->processTemplate($plantilla[0], $plantilla[1]), $contents);
