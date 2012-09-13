@@ -17,6 +17,9 @@ $usecache = false;
 // Tiempo en minutos que permanece el cache
 $cache_min = 5;
 
+// Configuración para localhost
+$base_route = '';
+
 // Variable de configuracion de demo
 
 if(file_exists('conf.php')) {
@@ -371,7 +374,9 @@ if(!defined('LOAD_INHOUSE')) {
 	if($request == '') {
 		$request = 'index.html';
 	}
-		
+	
+	$request = str_replace($base_route, '', $request);
+	
 	if(!file_exists($request)) {
 		header("HTTP/1.0 404 Not Found");
 		header('Status: 404 Not Found');
