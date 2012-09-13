@@ -105,7 +105,7 @@ class InHouse {
             catch(InhouseContentException $e) {}
 		}
 		
-		preg_match_all('/<!--#\s?inh:(\w+\([\d+|\w+:\w+:\w+]+(,\d+)?\))\s?-->(<[^!]|[^<])*<!--#\s?close:inh\s?-->/i', $contents, $vars, PREG_SET_ORDER );
+		preg_match_all('/<!--#\s?inh:(\w+\([\d+|\w+:\w+:\w+]+(,\d+(\-\w+)?)?\))\s?-->(<[^!]|[^<])*<!--#\s?close:inh\s?-->/i', $contents, $vars, PREG_SET_ORDER );
 		
 		foreach($vars as $plantilla) {
 			$contents = str_replace($plantilla[0], $this->processTemplate($plantilla[0], $plantilla[1]), $contents);
@@ -198,14 +198,23 @@ class InHouse {
 	
 	protected function processTemplate($original, $identificador) {
 		list($modulo, $id) = explode('(', trim($identificador, ')'));
-		
+				
 		$total = 0;
+		$pag = 1;
 		if(strpos($id, ',') !== false) {
 			$limit = explode(',', $id);
 			$id = $limit[0];				
 			$total = $limit[1];
+			if(strpos($total, '-') !== false) {
+				$tot = explode('-', $total);
+				$total = $tot[0];
+				$pag = $tot[1];
+				if((int) $pag == 0) {
+					$pag = isset($_GET[$pag])?$_GET[$pag]:1;
+				}
+			}
 		}
-		
+				
 		if((int) $id == 0) {
 			$conf = explode(':', $id);
 			
@@ -252,7 +261,6 @@ class InHouse {
 		$coleccion = '';
 		$array = $this->valores[$modulo][$id]->$modulo;
 		
-		$pag = isset($_GET['pag'])?$_GET['pag']:1;
 		$init = ($pag - 1)*$total;
 		
 		$total = $total * $pag;
@@ -363,7 +371,7 @@ if(!defined('LOAD_INHOUSE')) {
 	if($request == '') {
 		$request = 'index.html';
 	}
-	
+		
 	if(!file_exists($request)) {
 		header("HTTP/1.0 404 Not Found");
 		header('Status: 404 Not Found');
