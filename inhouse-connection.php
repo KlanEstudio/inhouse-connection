@@ -114,6 +114,11 @@ class InHouse {
 			$contents = str_replace($plantilla[0], $this->processTemplate($plantilla[0], $plantilla[1]), $contents);
 		}
 		
+		preg_match_all('/<!--#\s?inh:pag:(\w+\([\d+|\w+:\w+:\w+]+,\d+\))\s?-->(<[^!]|[^<])*<!--#\s?close:inh\s?-->/i', $contents, $vars, PREG_SET_ORDER );
+		foreach($vars as $paginacion) {
+			$contents = str_replace($paginacion[0], $this->processPaginacion($paginacion[0], $paginacion[1]), $contents);
+		}
+			
 		return $contents;
 	}
 	
@@ -287,6 +292,77 @@ class InHouse {
 				}
 				$contenido = str_replace( '{'.$var.'}', $data, $contenido);
 			}
+			$coleccion .= $contenido;
+		}
+		
+		return $coleccion;
+	}
+	
+	protected function processPaginacion($original, $identificador) {
+		list($modulo, $id) = explode('(', trim($identificador, ')'));
+				
+		$total = 0;
+		if(strpos($id, ',') !== false) {
+			$limit = explode(',', $id);
+			$id = $limit[0];				
+			$total = $limit[1];
+		}
+				
+		if((int) $id == 0) {
+			$conf = explode(':', $id);
+			
+			if(count($conf) == 3) {
+				$id = $this->getData($conf[0], $conf[1], $conf[2]);
+			}
+			else {
+				$id = isset($_GET[$id])?$_GET[$id]:0;
+			}
+		}
+				
+		if($modulo == 'banners' || $modulo == 'banner' || $modulo == 'videos' || $modulo == 'imagenes' || $modulo == 'audios') {
+			$modulo = 'medias';
+		}
+		
+		if($modulo == 'galerias_simple' || $modulo == 'imagenes_simple' || $modulo == 'videos_simple' || $modulo == 'audios_simple') {
+			$modulo = 'galerias';
+			$temp_data = $this->caller->get_json($this->caller->construct_call($modulo, $id));
+			if($temp_data->auth == false) {
+				throw new InhouseAuthException();
+			}
+			if(!isset($temp_data->galerias) || count($temp_data->galerias) == 0) {
+				throw new InhouseContentException();
+			}
+			$id = $temp_data->galerias[0]->id_galeria;
+			$modulo = 'medias';
+		}
+		
+		if(!isset($this->valores[$modulo][$id])) {
+			$data = $this->caller->get_json($this->caller->construct_call($modulo, $id));
+			$this->valores[$modulo][$id] = $data;
+			if($data->auth == false) {
+				throw new InhouseAuthException();
+			}
+		}
+		
+		preg_match_all('/{(\w+(\|\w*)?)}/i', $original, $vars);
+		
+		if(!isset($this->valores[$modulo][$id]->tipo)) {
+			throw new InhouseContentException();
+		}
+
+		$coleccion = '';
+		$array = $this->valores[$modulo][$id]->$modulo;
+						
+		if($total != 0 && $total < count($array)) {
+			$pags = ceil(count($array)/$total);
+		}
+		else {
+			$pags = 1;
+		}
+				
+		for($i = 1; $i <= $pags; $i++) {
+			$contenido = str_replace('{pag}', $i, $original);
+			$contenido = str_replace('{url}', $_SERVER['REQUEST_URI'], $contenido);
 			$coleccion .= $contenido;
 		}
 		
