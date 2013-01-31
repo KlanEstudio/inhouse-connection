@@ -443,6 +443,8 @@ if(!defined('LOAD_INHOUSE')) {
 		$uri = isset($_SERVER['REQUEST_URI'])?$_SERVER['REQUEST_URI']:'';
 		list($request) = explode('?', $uri);
 	}
+	$request = str_replace($base_route, '', $request);
+
 	$request = trim($request, '/');
 	
 	$request = str_replace('.php', '.html', $request);
@@ -450,8 +452,6 @@ if(!defined('LOAD_INHOUSE')) {
 	if($request == '') {
 		$request = 'index.html';
 	}
-	
-	$request = str_replace($base_route, '', $request);
 	
 	if(!file_exists($request)) {
 		header("HTTP/1.0 404 Not Found");
