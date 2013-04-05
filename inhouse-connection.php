@@ -77,6 +77,14 @@ class InHouse {
         $contents = str_replace("\r\n","\n", $contents);
 		$contents = str_replace("\r","\n", $contents);
 
+		preg_match_all('/{get:(\w*)}/i', $contents, $vars);
+		
+		foreach($vars[1] as $var) {
+			$strvar = isset($_GET[$var])?$_GET[$var]:'';
+			$strvar = htmlentities($strvar);
+			$contents = str_replace('{get:'.$var.'}', $strvar, $contents);
+		}
+
 		preg_match_all('/{custom:(\w+(\(\w+\))?)}/i', $contents, $vars);
 		
 		foreach($vars[1] as $var) {
